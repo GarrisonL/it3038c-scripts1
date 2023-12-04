@@ -1,0 +1,43 @@
+import os
+import shutil
+from datetime import datetime
+from collections import defaultdict
+
+# Define the directory to organize and the organization rules
+directory_to_organize = 'directory_to_organize'
+organization_rules = {
+    'Images': ('.jpg', '.jpeg', '.png', '.gif', '.bmp'),
+    'Documents': ('.pdf', '.docx', '.xlsx', '.pptx', '.txt'),
+    'Archives': (30, 'days')  # Move files older than 30 days to Archives
+}
+
+def organize_files(directory, rules):
+    now = datetime.now()
+
+    for folder_name, extensions in rules.items():
+        folder_path = os.path.join(directory, folder_name)
+        os.makedirs(folder_path, exist_ok=True)
+
+    for item in os.listdir(directory):
+        item_path = os.path.join(directory, item)
+        if os.path.isfile(item_path):
+            file_extension = os.path.splitext(item)[1].lower()
+            for folder_name, ext_list in rules.items():
+                if file_extension in ext_list:
+                    destination_folder = os.path.join(directory, folder_name)
+                    shutil.move(item_path, os.path.join(destination_folder, item))
+                    print(f"Moved '{item}' to {folder_name}")
+            if isinstance(ext_list, tuple) and len(ext_list) == 2:
+                duration, unit = ext_list
+                file_mtime = os.path.getmtime(item_path)
+                file_age = now - datetime.fromtimestamp(file_mtime)
+                if unit == 'days' and file_age.days > duration:
+                    destination_folder = os.path.join(directory, folder_name)
+                    shutil.move(item_path, os.path.join(destination_folder, item))
+                    print(f"Moved '{item}' to {folder_name}")
+
+if __name__ == "__main__":
+    print(f"Organizing files in '{directory_to_organize}'...")
+    organize_files(directory_to_organize, organization_rules)
+    print("Organization complete.")
+    
